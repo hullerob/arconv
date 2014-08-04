@@ -29,60 +29,12 @@ func main() {
 	}
 }
 
-const (
-	msgDone = iota
-	msgTotalFiles
-	msgProcFile
-	msgErrZip
-	msgErrConv
-	msgErrTar
+var (
+	flagVerbose bool
 )
 
-type message struct {
-	msg  int
-	ival int
-	sval string
-	err  error
-}
-
-func progress(messages <-chan message) int {
-	tfiles := 0
-	pfiles := 0
-	var procfile string
-LOOP:
-	msg := <-messages
-	switch msg.msg {
-	case msgDone:
-		fmt.Fprintf(os.Stderr, "\nall done\n")
-		return 0
-	case msgTotalFiles:
-		tfiles = msg.ival
-	case msgProcFile:
-		pfiles++
-		procfile = msg.sval
-	case msgErrZip:
-		fmt.Fprintf(os.Stderr, "\r%s: %v\033[K\n", os.Args[0], msg.err)
-		fmt.Fprintf(os.Stderr, "error not recoverable, exiting\n")
-		return 1
-	case msgErrConv:
-		fmt.Fprintf(os.Stderr, "\r%s: error while converting file '%s'\033[K\n", os.Args[0], msg.sval)
-		fmt.Fprintf(os.Stderr, "%v\n", msg.err)
-	case msgErrTar:
-		fmt.Fprintf(os.Stderr, "\r%s: %v\033[K\n", os.Args[0], msg.err)
-		fmt.Fprintf(os.Stderr, "error not recoverable, exiting\n")
-		return 1
-	default:
-		panic("erroneous message")
-	}
-	if len(procfile) > 0 {
-		fmt.Fprintf(os.Stderr, "\r[%4d/%4d] converting file '%s'\033[K", pfiles, tfiles, procfile)
-	} else {
-		fmt.Fprintf(os.Stderr, "\r[%4d/%4d]\033[K", pfiles, tfiles)
-	}
-	goto LOOP
-}
-
 func init() {
+	flag.BoolVar(&flagVerbose, "v", false, "print progress")
 	flag.Usage = usage
 }
 
