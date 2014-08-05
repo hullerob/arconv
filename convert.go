@@ -6,7 +6,9 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"github.com/hullerob/go.imagefile"
-	"image/png"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"strings"
 	"time"
@@ -25,10 +27,16 @@ func fileConv(ifch chan<- ifFile, zipch <-chan *zip.File, msg chan<- message) {
 
 func getConvFuncByName(name string) convFunc {
 	lname := strings.ToLower(name)
-	if strings.HasSuffix(lname, ".png") {
+	switch {
+	case strings.HasSuffix(lname, ".png"):
 		return imgConv(3)
+	case flagJpg && strings.HasSuffix(lname, ".jpg"):
+		return imgConv(3)
+	case flagJpg && strings.HasSuffix(lname, ".jpeg"):
+		return imgConv(4)
+	default:
+		return noConv
 	}
-	return noConv
 }
 
 func noConv(zf *zip.File, msg chan<- message) ifFile {
@@ -55,7 +63,7 @@ func noConv(zf *zip.File, msg chan<- message) ifFile {
 func imgConv(sufLen int) convFunc {
 	return func(zf *zip.File, msg chan<- message) ifFile {
 		tf := noConv(zf, msg)
-		img, err := png.Decode(tf.reader)
+		img, _, err := image.Decode(tf.reader)
 		if err != nil {
 			msg <- message{msg: msgErrConv, err: err, sval: tf.header.Name}
 			tf.reader.Close()

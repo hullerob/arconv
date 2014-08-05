@@ -31,10 +31,12 @@ func main() {
 
 var (
 	flagVerbose bool
+	flagJpg     bool
 )
 
 func init() {
 	flag.BoolVar(&flagVerbose, "v", false, "print progress")
+	flag.BoolVar(&flagJpg, "jpg", false, "convert jpg files")
 	flag.Usage = usage
 }
 
