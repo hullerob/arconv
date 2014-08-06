@@ -56,6 +56,7 @@ func noConv(zf *zip.File, msg chan<- message) ifFile {
 	tf := ifFile{
 		header: tfh,
 		reader: zfr,
+		format: "copy",
 	}
 	return tf
 }
@@ -63,9 +64,13 @@ func noConv(zf *zip.File, msg chan<- message) ifFile {
 func imgConv(sufLen int) convFunc {
 	return func(zf *zip.File, msg chan<- message) ifFile {
 		tf := noConv(zf, msg)
-		img, _, err := image.Decode(tf.reader)
+		img, format, err := image.Decode(tf.reader)
 		if err != nil {
-			msg <- message{msg: msgErrConv, err: err, sval: tf.header.Name}
+			msg <- message{
+				msg:  msgErrConv,
+				err:  err,
+				file: tf.header.Name,
+			}
 			tf.reader.Close()
 			return noConv(zf, msg)
 		}
@@ -79,6 +84,7 @@ func imgConv(sufLen int) convFunc {
 		}()
 		tf.header.Size = int64(size)
 		tf.reader = r
+		tf.format = format
 		return tf
 	}
 }

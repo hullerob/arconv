@@ -10,6 +10,7 @@ import (
 type ifFile struct {
 	header tar.Header
 	reader io.ReadCloser
+	format string
 }
 
 func writeTar(w io.Writer, ifch <-chan ifFile, msg chan<- message) {
@@ -26,7 +27,11 @@ func writeTar(w io.Writer, ifch <-chan ifFile, msg chan<- message) {
 			return
 		}
 		file.reader.Close()
-		msg <- message{msg: msgProcFile, sval: file.header.Name}
+		msg <- message{
+			msg:  msgProcFile,
+			file: file.header.Name,
+			conv: file.format,
+		}
 	}
 	tw.Close()
 	msg <- message{msg: msgDone}
